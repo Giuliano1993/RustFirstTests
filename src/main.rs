@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::{self, BufRead};
@@ -25,15 +26,32 @@ fn main() {
     /*for line in read_lines(path){
         println!("{}",line);
     }*/
+    let mut directions = String::new();
 
+    let mut directionsChange : HashMap<String, String> = Default::default();
     if let Ok(lines) = read_lines(path) {
+        println!("{}",path);
         // Consumes the iterator, returns an (Optional) String
-        for line in lines {
-            if let Ok(ip) = line {
-                println!("{}", ip);
+        for (i, line) in lines.enumerate() {
+            if let Ok(doc_line) = line {
+                if i == 0 {
+                    directions = doc_line.clone();
+                }else if i > 1 {
+                    let splitted : Vec<&str> = doc_line.split(" = ").collect();
+                    let str_values = splitted[1].to_string()[1..splitted[1].to_string().len() - 1];
+                    let rawvalues : Vec<&str> = str_values.split(", ").collect();
+                    let values  = vec![rawvalues[0], rawvalues[1]];
+                    dbg!(values);
+                    directionsChange.insert(splitted[0].to_string(), splitted[1].to_string());
+                    dbg!(&directionsChange);
+                    
+                }
+                //println!("{}", doc_line);
             }
         }
     }
+
+    println!("Directions are {}", directions);
 
     /*for line in content{
         print!("{line}")
@@ -64,4 +82,9 @@ where P: AsRef<Path>, {
     // in rust, the return is implicit and what is returned is the last expression, like this
     // we can still return early in the function using the return keyworkd
     Ok(io::BufReader::new(file).lines())
+}
+
+
+fn parse_input(){
+
 }
