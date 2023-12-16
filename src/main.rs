@@ -4,14 +4,39 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
+
+#[derive(Debug)]
+struct Direction{
+    bivio: [String; 2]
+}
+impl Direction{
+    fn get_dir(&self, direction: char) -> String{
+
+        match direction {
+            'R' => self.bivio[1].clone(),
+            'L' => self.bivio[0].clone(),
+            _ => panic!("not a valid direction")
+        }
+    }
+}
+
+fn parse_line(mut input: &str) -> Direction{
+
+    input = rem_first_and_last(input);
+
+    let out  : Vec<&str> = input.split(", ").collect();
+    let output_array : [String; 2] = [out[0].to_string(), out[1].to_string()];
+    return Direction{
+        bivio: output_array
+    };
+}
+
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let path = &args[1];
     println!("Opening file {}", path);
-
     
-    
-
     //let content = fs::read_to_string(path).expect("non stai leggendo bene il file");
 
     // unwrap gestisce all in one sia lo stato OK che il Panic di una determinata funzione
@@ -28,7 +53,7 @@ fn main() {
     }*/
     let mut directions = String::new();
 
-    let mut directionsChange : HashMap<String, String> = Default::default();
+    let mut directions_change : HashMap<String, Direction> = Default::default();
     if let Ok(lines) = read_lines(path) {
         println!("{}",path);
         // Consumes the iterator, returns an (Optional) String
@@ -38,31 +63,54 @@ fn main() {
                     directions = doc_line.clone();
                 }else if i > 1 {
                     let splitted : Vec<&str> = doc_line.split(" = ").collect();
-                    let str_values = splitted[1].to_string()[1..splitted[1].to_string().len() - 1];
-                    let rawvalues : Vec<&str> = str_values.split(", ").collect();
-                    let values  = vec![rawvalues[0], rawvalues[1]];
-                    dbg!(values);
-                    directionsChange.insert(splitted[0].to_string(), splitted[1].to_string());
-                    dbg!(&directionsChange);
-                    
+                    directions_change.insert(splitted[0].to_string(), parse_line(splitted[1]));   
                 }
-                //println!("{}", doc_line);
             }
         }
     }
-
-    println!("Directions are {}", directions);
-
-    /*for line in content{
-        print!("{line}")
-    }*/
+    let final_steps = follow_path(directions, directions_change);
+    println!("Steps for the end = {}",final_steps);
     //let content_secon = fs::read(path).expect("non stai leggendo bene il file");
     //println!("{content}");
     //for i in content_secon{
     //    println!("{i}")
     //}
+
 }
 
+
+fn rem_first_and_last(value: &str) -> &str {
+    let mut chars = value.chars();
+    chars.next();
+    chars.next_back();
+    chars.as_str()
+}
+
+fn follow_path(directions: String, changes_map : HashMap<String, Direction>) -> usize{
+    let mut next_step = String::from("AAA");
+    let mut steps = 0;
+    let mut direction: char;
+    let mut possible_steps: &Direction;
+    let mut dir_index = 0;
+    while next_step != "ZZZ" {
+
+        possible_steps = changes_map.get(&next_step).unwrap();
+
+        direction = directions.chars().nth(dir_index).unwrap();
+
+        next_step = possible_steps.get_dir(direction);
+
+
+        steps = steps + 1;
+        if dir_index < directions.len() -1 {
+            dir_index = dir_index + 1;
+        }else{
+            dir_index = 0;
+        }
+        
+    }
+    return steps;
+}
 
 
 // -> the arrow express the return type of a function
@@ -82,9 +130,4 @@ where P: AsRef<Path>, {
     // in rust, the return is implicit and what is returned is the last expression, like this
     // we can still return early in the function using the return keyworkd
     Ok(io::BufReader::new(file).lines())
-}
-
-
-fn parse_input(){
-
 }
